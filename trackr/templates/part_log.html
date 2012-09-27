@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Scan the barcode of a part to view it's history.</h2>
+	<form action="." method="GET">{% csrf_token %}
+		{{ form.as_p }}
+    	<input type='submit' />
+    </form>
+	
+	{% if errors %}    
+    	<p>Query Failed</p>	
+		{% for item in errors %}
+			{{ item }}
+		{% endfor %}
+		
+	{% endif %}	
+
+{% endblock %}

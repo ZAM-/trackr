@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+<head><title>{{ title }}</title></head>
+
+
+{% block content %}
+<br>
+
+  <form id="myForm" method="post" action="">{% csrf_token %}
+    <table border="0" cellpadding="0" cellspacing="0">
+      <tbody>
+      	  <th>Status</th>
+          <th>Bar Code</th>
+        {% for form in formset.forms %}
+          <tr>
+            <td>{{ form.status }}</td>
+            <td>{{ form.bar_code }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+      {{ formset.management_form }}
+      <br>
+<input type='submit'>
+</form>
+    <p><a href='/add_part_type'>Define a new part ID</a></p>	
+	{{ formset_errors }}
+</div>
+{% endblock %}

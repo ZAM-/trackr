@@ -1,0 +1,15 @@
+Completed:
+	- Added new form with part type options and text area field
+	- Created new view to display the form
+	- Got the bar_codes enetered in text area
+		~ Converted the values to a list
+		~ The list allows me to figure out how many values have been entered
+			` As long as they're entered in by seperation by newlines
+	
+	
+TO DO:
+
+	- Build each part entry as part of a formset
+	- Add comment fields to all models
+	- 
+	

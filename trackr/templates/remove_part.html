@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Scan the barcode to check out the part.</h2>
+	<form action="." method="POST">{% csrf_token %}
+		{{ form.as_p }}
+    	<input type='submit' />
+    </form>
+	
+	{% if errors %}    
+    	<p>Error_list</p>	
+		{% for item in errors %}
+			{{ item }}
+		{% endfor %}
+		
+	{% endif %}	
+
+{% for message in messages %}
+        {{ message }}<br />
+{% endfor %}
+
+
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+
+{% block content %}	
+
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
+
+<p>Inventory Table</p>
+{% load render_table from django_tables2 %}
+{% render_table table %}
+{% endblock %}
+

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+<head><title>{{ title }}</title></head>
+
+
+{% block content %}
+
+  <form id="myForm" method="post" action="">
+    <table border="0" cellpadding="0" cellspacing="0">
+      <tbody>
+        {% for form in formset.forms %}
+          <tr>
+            <td>{{ form.type }}</td>
+            <td>{{ form.bar_code }}</td>
+            <td>{{ form.status }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+      {{ formset.management_form }}
+      <br>
+<input type='submit'>
+</form>
+    <p><a href='/add_part_type'>Define a new part ID</a></p>	
+	{{ formset_errors }}
+</div>
+{% endblock %}

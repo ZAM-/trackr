@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+
+{% block content %}	
+
+
+<h2>Scan the part and mark the new status. </h2>
+	<form action="" method="POST">{% csrf_token %}
+		{{ form.as_p }}
+    	<input type='submit' />
+    </form>
+    <p><a href='/add_part_type'>Define a new part ID</a></p>
+
+	{% if errors %}    
+    	<p>Error_list</p>	
+		{% for item in errors %}
+			{{ item }}
+		{% endfor %}
+		
+	{% endif %}	
+
+	{% for message in messages %}
+        {{ message }}<br />
+	{% endfor %}
+
+
+{% endblock %}

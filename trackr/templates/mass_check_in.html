@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+
+<head><title>{{ title }}</title></head>
+
+{% block content %}
+<div style="float:center" >
+<h2>Scan the barcode to check in the part.</h2>
+<form id ="myForm" action="" method="post">{% csrf_token %}
+{{ formset.non_form_errors.as_ul }}
+<table id="formset" class="form" >
+{% for form in formset.forms %}
+  {% if forloop.first %}
+  <thead><tr>
+    {% for field in form.visible_fields %}
+    <th>{{ field.label|capfirst }}</th>
+    {% endfor %}
+  </tr></thead>
+  {% endif %}
+  <tr class="{% cycle row1,row2 %}">
+  {% for field in form.visible_fields %}
+    <td>
+    {# Include the hidden fields in the form #}
+    {% if forloop.first %}
+      {% for hidden in form.hidden_fields %}
+      	{{ hidden.errors.as_ul }}
+      	{{ hidden }}
+      {% endfor %}
+    {% endif %}
+      {{ field.errors.as_ul }}
+      {{ field }}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
+{{ formset.management_form }}
+<input type='submit'>
+</form>
+    <p><a href='/add_part_type'>Define a new part ID</a></p>	
+	{{ formset_errors }}
+</div>
+
+{% endblock %}
+

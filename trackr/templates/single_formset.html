@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+
+<head><title>{{ title }}</title></head>
+
+{% block content %}
+<div style="float:center" >
+<h2>Scan the barcode to check in the part.</h2>
+<form action="" method="post">{% csrf_token %}
+	{{ formset.management_form }}
+	{{ formset }}
+<input type='submit'>
+</form>
+    <p><a href='/add_part_type/'>Define a new part ID</a></p>	
+	{{ formset_errors }}
+</div>
+
+{% endblock %}
+
