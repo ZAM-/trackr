@@ -1,7 +1,7 @@
 # DJANGO IMPORTS
 from django.conf.urls import patterns, include, url
 from django.views.generic import TemplateView
-
+# git test
 # MY IMPORTS
 from trackr.preview import PartPreview
 from trackr.forms import MyFormStep1, BasePartForm
@@ -28,7 +28,7 @@ urlpatterns = patterns('',
     url(r'easy/$', views.easy_check_in),
     url(r'easy_mass/$', views.easy_mass_check_in),
 #    url(r'single_type_checkIn/$', views.single_type_input),
-    url(r'^post/$', PartPreview(MyFormStep1)),
+#    url(r'^post/$', PartPreview(MyFormStep1)),
 
     
     
