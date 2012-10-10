@@ -22,12 +22,7 @@ from models import Part, PartType, PartLog, Status
 class PartTypeForm(ModelForm):
     class Meta:
         model = PartType
-        
-class PartLogForm(ModelForm):
-    class Meta:
-        model = PartLog
-        exclude=('time_stamp')
-        
+
 class BasePartForm(ModelForm):
     # Creating a modelform for other forms to inherit from BasePartForm
     # to test other cleaning methods in BasePartForm
@@ -48,6 +43,7 @@ class BasePartForm(ModelForm):
     class Meta(ModelForm):
         model = Part
 
+# Base Form
 class BasePartFormSet(BaseModelFormSet):
     # For formsets and multiple added entries.    
     def __init__(self, *args, **kwargs):
@@ -55,12 +51,12 @@ class BasePartFormSet(BaseModelFormSet):
         for form in self.forms:
             form.empty_permitted = False
             
-    # Form to form validating        
+    # Form to form validation        
     def clean(self):
         if any(self.errors):
             return
         sns=[]
-        # Checking each form if the same barcode is trying to be submitted twice
+        # Checking for duplicate barcodes to be submitted
         for i in range(0,self.total_form_count()):
             form = self.forms[i]
             sn = form.cleaned_data['bar_code']
@@ -69,41 +65,16 @@ class BasePartFormSet(BaseModelFormSet):
             else:
                 print "Checking if %s for duplicates between each form" % sn
                 sns.append(sn)
-                
-class BaseSingleTypePFS(BaseModelFormSet):
-    def __init__(self, *args, **kwargs):
-        super(BasePartFormSet, self).__init__(*args, **kwargs)
-        for form in self.forms:
-            form.empty_permitted = False
-            
-    # Form to form validating        
-    def clean(self):
-        if any(self.errors):
-            return
-        sns=[]
-        # Checking each form if the same barcode is trying to be submitted twice
-        for i in range(0,self.total_form_count()):
-            form = self.forms[i]
-            sn = form.cleaned_data['bar_code']
-            if sn in sns:
-                raise forms.ValidationError("Error: You cannot submit two of the same serial numbers")
-            else:
-                print "Checking if %s for duplicates between each form" % sn
-                sns.append(sn)
-    
 
-# Base Form
 class PartForm(BasePartForm):
-
-
+# Views -- check_in_or_update_part()
+#          check_in_part()
     class Meta:
         model = Part
         widgets = {
-                   'bar_code': TextInput(attrs={'size': 30}), #Making text box bigger 
+                   'bar_code': TextInput(attrs={'size': 30}), # Making text box bigger 
                    'serial_number': HiddenInput(attrs={'value':''}),
                    }
-    
-
     def clean_serial_number(self):
         # Assigning clean data.
         bar_code = self.cleaned_data.get("bar_code")
@@ -140,6 +111,7 @@ class PartForm(BasePartForm):
 
 # Base Formset
 class BaseEasyPartFormSet(BaseFormSet):
+# Views -- easy_mass_check_in()    
     """def __init__(self, *args, **kwargs):
         super(BaseEasyPartFormSet, self).__init__(*args, **kwargs)
         for form in self.forms:
@@ -208,10 +180,10 @@ class PartUploadFileForm(Form):
             partobj.save()
 
 class PartLogSearchForm(Form):
+    
     bar_code = forms.CharField(max_length=100, required=False,
                                widget=TextInput(attrs={'size':'30'})
                                )
-    
     def clean_bar_code(self):
         bar_code = self.cleaned_data['bar_code']
         if not bar_code:
@@ -220,6 +192,7 @@ class PartLogSearchForm(Form):
     
 
 class EasyPartForm(Form):
+# Views -- easy_mass_check_in() to create the 1 form that the formset will use
     bar_code = forms.CharField(max_length=100, required=True,
                                widget = TextInput(attrs={'size':'30'})
                                )
@@ -227,6 +200,8 @@ class EasyPartForm(Form):
 
 
     def process(self):
+    # This method is how each new bar_code tha is scanned in will be created and saved    
+        
         # Setting attributes for partobj
         bar_code = self.cleaned_data['bar_code']
         status = self.cleaned_data['status']
@@ -234,7 +209,7 @@ class EasyPartForm(Form):
         ptype = None
         # Getting ALL existing types
         all_types = PartType.objects.values('name','number') #LOD
-        # Looping through all the times
+        # Looping through all the types
         # setting type and serial_number according to match. 
         for types in all_types:
             if types['number'] in bar_code:
@@ -252,15 +227,13 @@ class EasyPartForm(Form):
         else:
             return False
                                 
-class AfterF(Form):
-    type = ModelChoiceField(queryset=PartType.objects.all())
-    parts = forms.CharField()
+
      
-class MyFormStep1(Form):
+class MyFormStep0(Form):
     type = forms.ModelChoiceField(queryset=PartType.objects.all(), required=True)
     parts = forms.CharField(widget=forms.Textarea,required=True)
     
-    def process(self):
+    def clean(self):
         errlst = []
         part_list=[] # For now this is only to determine how many "extra" forms are needed
         form_collection = []
@@ -273,21 +246,10 @@ class MyFormStep1(Form):
             form_collection.append({typez:part})
             
         extra_forms = len(part_list) #Defining the # of extra forms needed for the modelformset
-        
-        part_formset = formset_factory(AfterF, extra = extra_forms)
-        formset = part_formset(initial=form_collection)
-        
-        return formset
     
-def MyFormStep2(Form):
-    def __init__(self, data_form_post=None):
-        if data_form_post is not None:
-            _post = data_form_post
-            typez = _post.get('type', None)
-            parts = _post.get('parts', None)
-            
-    parts = forms.CharField(widget=forms.Textarea,required=True)
-
+class MyFormStep1(Form):
+    class Meta:
+        model = Part
 """                     
     def clean(self):
         #Checks that no two articles have the same title

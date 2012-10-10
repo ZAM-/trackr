@@ -16,10 +16,11 @@ from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.contrib.formtools.wizard.views import SessionWizardView
+
 import ipdb
 # My imports
 from models import Part, Manufacturer, PartType, Status, PartLog
-from forms import AfterF, EasyPartForm, PartLogSearchForm, PartUploadFileForm, BasePartForm, PartForm, CheckOutPartForm, PartTypeForm, BasePartFormSet, BaseEasyPartFormSet
+from forms import MyFormStep0, MyFormStep1,EasyPartForm, PartLogSearchForm, PartUploadFileForm, BasePartForm, PartForm, CheckOutPartForm, PartTypeForm, BasePartFormSet, BaseEasyPartFormSet
 from tables import PartT, ManufacturerT, CurrentCountT, PartTypeT, PartLogT
 from signals import log_entry
 
@@ -30,7 +31,9 @@ from django_tables2.utils import Accessor
 
 
 # VIEWS 
-    
+def index(request):
+    return render(request,'base.html')
+
 def search_log(request):
     errlst=[]
     c = {}
@@ -60,8 +63,6 @@ def search_log(request):
                                                'form': form,
                                                'errors': errlst,
                                                })
-def index(request):
-    return render(request,'base.html')
 
 def part_table(request):
     data = Part.objects.all() # QuerySet object list(dict())
@@ -147,10 +148,8 @@ def check_in_part(request):
             form.save()
             type = form.cleaned_data['type'].name
             sn = form.cleaned_data['bar_code']
-
-            messages.success(request,"%s with bar code %s has been successfully added!" % (type,sn))
-            
             # Returns empty form and new 'success' message
+            messages.success(request,"%s with bar code %s has been successfully added!" % (type,sn))
             return http.HttpResponseRedirect('')
     else:
         # Setting the sn with a str placeholder to replace later after cleaning        
@@ -293,4 +292,14 @@ def easy_mass_check_in(request):
 # Restrictions: Only one part type can be proccessed at a time.
 
 
-           
+ 
+class FormWizard(SessionWizardView):
+    def get_template_names(self):
+        return ['part_wizard.html']
+        
+    def done(self, request, form_list, **kwargs):
+        print form_list
+        return render(request,'done.html', {
+                                                  'form_data': [form.cleaned_data for form in form_list],
+                                                  })
+

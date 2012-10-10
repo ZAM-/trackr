@@ -19,7 +19,7 @@ from django.contrib.formtools.preview import FormPreview
 import ipdb
 # My imports
 from models import Part, Manufacturer, PartType, Status, PartLog
-from forms import AfterF,EasyPartForm, PartLogSearchForm, PartUploadFileForm, BasePartForm, PartForm, CheckOutPartForm, PartTypeForm, BasePartFormSet, BaseEasyPartFormSet
+from forms import EasyPartForm, PartLogSearchForm, PartUploadFileForm, BasePartForm, PartForm, CheckOutPartForm, PartTypeForm, BasePartFormSet, BaseEasyPartFormSet
 from tables import PartT, ManufacturerT, CurrentCountT, PartTypeT, PartLogT
 from signals import log_entry
 

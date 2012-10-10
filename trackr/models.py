@@ -104,5 +104,4 @@ class PartLog(models.Model):
     def __unicode__(self):
         return unicode(self.time_stamp)
         
-
     

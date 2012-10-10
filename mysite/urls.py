@@ -10,6 +10,8 @@ from trackr.forms import MyFormStep1, BasePartForm
 # admin.autodiscover()
 #from trackr.views import viewPartTable, viewPartTypeTable, manu_detail
 from trackr import views
+from trackr.forms import MyFormStep0, MyFormStep1
+from trackr import wizard
 urlpatterns = patterns('',
     #url(r'^test/', include('trackr.urls')),
     #url(r'parts/', include('trackr.urls')),
@@ -27,7 +29,7 @@ urlpatterns = patterns('',
     url(r'part_log/$', views.search_log),
     url(r'easy/$', views.easy_check_in),
     url(r'easy_mass/$', views.easy_mass_check_in),
-#    url(r'single_type_checkIn/$', views.single_type_input),
+    url(r'wizard/$', views.FormWizard.as_view([MyFormStep0,MyFormStep1])),
 #    url(r'^post/$', PartPreview(MyFormStep1)),
 
     
