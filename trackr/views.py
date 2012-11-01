@@ -20,7 +20,7 @@ from django.contrib.formtools.wizard.views import SessionWizardView
 import ipdb
 # My imports
 from models import Part, Manufacturer, PartType, Status, PartLog
-from forms import MyFormStep0, MyFormStep1,EasyPartForm, PartLogSearchForm, PartUploadFileForm, BasePartForm, PartForm, CheckOutPartForm, PartTypeForm, BasePartFormSet, BaseEasyPartFormSet
+from forms import TextAreaForm, MyFormStep0, MyFormStep1,EasyPartForm, PartLogSearchForm, PartUploadFileForm, BasePartForm, PartForm, CheckOutPartForm, PartTypeForm, BasePartFormSet, BaseEasyPartFormSet
 from tables import PartT, ManufacturerT, CurrentCountT, PartTypeT, PartLogT
 from signals import log_entry
 
@@ -138,29 +138,7 @@ def check_in_or_update_part(request):
                                            'form': form,
                                            'errlist': errlst
                                            })
-def check_in_part(request):
-    errlst=[]
-    c = {}
-    c.update(csrf(request))
-    if request.method == 'POST':
-        form = PartForm(request.POST)
-        if form.is_valid():
-            form.save()
-            type = form.cleaned_data['type'].name
-            sn = form.cleaned_data['bar_code']
-            # Returns empty form and new 'success' message
-            messages.success(request,"%s with bar code %s has been successfully added!" % (type,sn))
-            return http.HttpResponseRedirect('')
-    else:
-        # Setting the sn with a str placeholder to replace later after cleaning        
-        form = PartForm(initial={'serial_number':'placeholder', 'status': Status(3)})
-        
-        
-    return render(request,'add_part.html',{
-                                           'title':'Add Item',
-                                           'form': form,
-                                           'errlist': errlst,
-                                           })
+
 def mass_check_in(request):
     # queryset
     qs = Part.objects.none()
@@ -220,12 +198,16 @@ def check_out_part(request):
 
 
 def add_part_type(request):
+    
     c = {}
     c.update(csrf(request))
     if request.method == 'POST':
         form = PartTypeForm(request.POST)
         if form.is_valid():
             form.save()
+
+        print "ITEMS"
+        print request.session.items()
         return http.HttpResponseRedirect('/check_in/')    
     else:
         form = PartTypeForm()
@@ -257,7 +239,14 @@ def easy_check_in(request):
     if request.method == 'POST':
         form = EasyPartForm(request.POST)
         if form.is_valid():
-            
+            # Processing the form creating the Part() object, and assigning it's neccessary attributes
+            # Attributes include Type and Serial_Number,
+            part_instance = form.process() # Actual Part() object
+            type = part_instance.type
+            bar_code = part_instance.bar_code
+            part_instance.save()
+            # Returns empty form and new 'success' message
+            messages.success(request,"%s with bar code %s has been successfully added!" % (type,bar_code))
             return http.HttpResponseRedirect('')
     else:
         form = EasyPartForm(initial={'status':Status(3)})
@@ -265,8 +254,7 @@ def easy_check_in(request):
     return render(request, 'easy_check_in.html', {
                                                 'form':form})         
         
-def easy_mass_check_in(request):
-    # The initial queryset to supply the Formset qs = Part.objects.none()
+def easy_many_check_in(request):
     c = {}
     c.update(csrf(request))
     PartFormSetFactory = formset_factory(form=EasyPartForm,
@@ -275,7 +263,6 @@ def easy_mass_check_in(request):
     if request.method == 'POST':
         PartFormSet = PartFormSetFactory(request.POST)
         if PartFormSet.is_valid():
-            print 
             PartFormSet.process()
             return http.HttpResponseRedirect('/current_count/')
     else:
@@ -291,15 +278,74 @@ def easy_mass_check_in(request):
 # formset with each bar_code entered as a form. Which 'should' allow for seperate validation
 # Restrictions: Only one part type can be proccessed at a time.
 
-
- 
-class FormWizard(SessionWizardView):
-    def get_template_names(self):
-        return ['part_wizard.html']
+def text_area_check_in(request):
+    c = {}
+    message_list = []
+    c.update(csrf(request))
+    if request.method == "POST":
+        form = TextAreaForm(request.POST)
+        if form.is_valid():
+            v_scans, iv_scans = form.process()
+            # Counting occurances of each valid and invalid scans
+            # Used for messaging system for User notification
+            v = {}
+            for item in v_scans:
+                if item not in v.keys():
+                    v[item] = 1
+                    message_list.append(v)
+                else:
+                    v[item] += 1
+                    message_list.append(v)
+            
+            
+            print "message_list", message_list
+            iv = {}
+            for item in iv_scans:
+                if item not in iv.keys():
+                    iv[item] = 1
+                else:
+                    iv[item]
+                    
+            return http.HttpResponseRedirect('')
+    else:
+        form = TextAreaForm(initial={'status':Status(3)})
         
-    def done(self, request, form_list, **kwargs):
-        print form_list
-        return render(request,'done.html', {
-                                                  'form_data': [form.cleaned_data for form in form_list],
-                                                  })
+    return render(request,'easy_check_in.html',{
+                                               'form': form,
+                                               'messages': message_list})
 
+class SuperSoftWizard(SessionWizardView):
+    def get_context_data(self, form, **kwargs):
+        # Used to supply extra context data to be passed to the template
+        # Allows to display pieces of data at a particular step
+        context = super(SuperSoftWizard, self).get_context_data(form=form, **kwargs)
+        if self.steps.current == "0":
+            context.update({'var': "Hello"})
+        
+        return context
+    
+    def process_step(self, form):
+        # Used to perform extra work before the data gets stored within
+        # the storage backend. Data should NOT be manipulated here
+
+        # Getting ALL existing types
+        all_types = PartType.objects.values('name','number')
+        
+        if self.steps.current == "0":
+            a = form.data.getlist('0-parts', None) # list
+            for items in a:
+                print items
+        else:
+            return None
+        
+        return self.get_form_step_data(form)
+        
+    """def get_form_step_data(self, form=MyFormStep0):
+        print form.data.items()
+        return form.data    
+    """
+    
+    def done(self, form_list, **kwargs):
+        
+
+        return http.HttpResponseRedirect('/post/')

@@ -31,20 +31,16 @@ from django_tables2.utils import Accessor
 
 class PartPreview(FormPreview):
 
+    #form_template = 'templates/post.html'
+    #preview_template = 'templates/review.html'
+    
+    def process_preview(self,request, form, context):
+        print "hi"
+
     def done(self, request, cleaned_data):
-        part_list=[] # For now this is only to determine how many "extra" forms are needed
-        form_collection = []
-        typez = None
-        data = self.cleaned_data
-        parts = data.get('parts',None) #Bar_codes of parts
-        typez = data.get('type', None)
-        # Parsing textarea box for barcode scanner input
-        for part in parts.splitlines():
-            form_collection.append({typez:part})
-            
-        extra_forms = len(part_list) #Defining the # of extra forms needed for the modelformset
-        
-        
+        print "Done"
+        print cleaned_data
         return render_to_response('/form/success', )
+        
          
         

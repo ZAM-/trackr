@@ -141,9 +141,15 @@ class BaseEasyPartFormSet(BaseFormSet):
                     partobj.serial_number = serial_number
                     partobj.save()
                     print 2
-
+                    return partobj
+                    return True
                 else:
-                    print 3
+                    pass
+                    
+
+            else:
+                return False
+                print 3
 
 
 
@@ -190,7 +196,32 @@ class PartLogSearchForm(Form):
             raise forms.ValidationError("Please enter a bar_code")
         return bar_code
     
-
+class TextAreaForm(Form):
+    
+    status = forms.ModelChoiceField(queryset=Status.objects.all(), required=True)
+    bar_codes = forms.CharField(widget=forms.Textarea,required=True)
+    
+    def process(self):
+        # Getting all the parts entered in the the text area field
+        data = self.cleaned_data
+        bar_codes = data.get('bar_codes', None) #Bar_codes of parts
+        status = data.get('status', None)
+        
+        all_types = PartType.objects.values('name','number') #Getting ALL existing types LOD
+        
+        bc_collection = [bc for bc in bar_codes.splitlines()] #Parsing textarea box for barcode scanner input        
+        invalid_bc = []
+        valid_bc = []
+        
+        #Step 1 of filtering valid and invalid bcs from user input
+        ([valid_bc.append(bc) for bc in bc_collection if any(types['number'] in bc for types in all_types)],
+         [invalid_bc.append(bc) for bc in bc_collection if not any(types['number'] in bc for types in all_types)])
+        
+        print "valid_bc list", valid_bc
+        print "invalid_bc list", invalid_bc
+        return (valid_bc, invalid_bc)
+                                        
+    
 class EasyPartForm(Form):
 # Views -- easy_mass_check_in() to create the 1 form that the formset will use
     bar_code = forms.CharField(max_length=100, required=True,
@@ -200,8 +231,7 @@ class EasyPartForm(Form):
 
 
     def process(self):
-    # This method is how each new bar_code tha is scanned in will be created and saved    
-        
+    # pre-save process method. The Part() object saving happens in the view. 
         # Setting attributes for partobj
         bar_code = self.cleaned_data['bar_code']
         status = self.cleaned_data['status']
@@ -214,13 +244,15 @@ class EasyPartForm(Form):
         for types in all_types:
             if types['number'] in bar_code:
                 ptype = types['name']
-                serial_number = bar_code.replace(types['number'],'')
+                serial_number = bar_code.replace(types['number'],'') # breaking up bar_code into PN + SN
                 partobj = Part()
                 partobj.bar_code = bar_code
                 partobj.status = status
                 partobj.type = PartType.objects.get(name=ptype)
                 partobj.serial_number = serial_number
-                partobj.save()
+                
+                #Returning partobj so I can use type, and SN in the user messages.
+                return partobj
                 return True
             else:
                 pass
@@ -228,28 +260,37 @@ class EasyPartForm(Form):
             return False
                                 
 
-     
+# Wizard forms
 class MyFormStep0(Form):
-    type = forms.ModelChoiceField(queryset=PartType.objects.all(), required=True)
+    status = forms.ModelChoiceField(queryset=Status.objects.all(), required=True)
     parts = forms.CharField(widget=forms.Textarea,required=True)
     
     def clean(self):
-        errlst = []
-        part_list=[] # For now this is only to determine how many "extra" forms are needed
         form_collection = []
-        typez = None
+        serail_number = None
+        ptype = None
+        # Getting ALL existing types
+        all_types = PartType.objects.values('name','number') #LOD
+        
+        # Getting all the parts entered in the the text area field
         data = self.cleaned_data
-        parts = data.get('parts',None) #Bar_codes of parts
-        typez = data.get('type', None)
+        bar_codes = data.get('parts',None) #Bar_codes of parts
+        
         # Parsing textarea box for barcode scanner input
-        for part in parts.splitlines():
-            form_collection.append({typez:part})
+        for bc in bar_codes.splitlines():
+            for types in all_types:
+                if types['number'] in bc:
+                    ptype = types['name']
+            form_collection.append({'bc':bc})
             
-        extra_forms = len(part_list) #Defining the # of extra forms needed for the modelformset
+        
     
-class MyFormStep1(Form):
+class MyFormStep1(ModelForm):
+    parts = forms.CharField(widget=forms.Textarea, required=True)
+    
     class Meta:
         model = Part
+        exclude = ('part','status','bar_code','serial_number')
 """                     
     def clean(self):
         #Checks that no two articles have the same title

@@ -44,3 +44,48 @@ class BaseSingleTypePFS(BaseModelFormSet):
         
         part_formset = formset_factory(AfterF, extra = extra_forms)
         formset = part_formset(initial=form_collection    
+                               
+                               
+# views.py
+def check_in_part(request):
+    errlst=[]
+    c = {}
+    c.update(csrf(request))
+    if request.method == 'POST':
+        form = PartForm(request.POST)
+        if form.is_valid():
+            form.save()
+            type = form.cleaned_data['type'].name
+            sn = form.cleaned_data['bar_code']
+            # Returns empty form and new 'success' message
+            messages.success(request,"%s with bar code %s has been successfully added!" % (type,sn))
+            return http.HttpResponseRedirect('')
+    else:
+        # Setting the sn with a str placeholder to replace later after cleaning        
+        form = PartForm(initial={'serial_number':'placeholder', 'status': Status(3)})
+        
+        
+    return render(request,'add_part.html',{
+                                           'title':'Add Item',
+                                           'form': form,
+                                           'errlist': errlst,
+                                           })
+    
+    
+        for types in all_types.iterator():    
+            for bc in bc_collection:
+
+        #for bc in range(len(bc_collection)):
+        #   for types in all_types.iterator():
+                if types['number'] in bc: #Only constraint the bc must pass to be considered valid.
+                    # Building Parts one by one
+                    partobj = Part()
+                    partobj.bar_code = bc
+                    partobj.serial_number = bc.replace(types['number'],'')
+                    #FIXME: Get breaks if there are parts of the same name
+                    partobj.type = PartType.objects.get(name=types['name']) #This could cost performance
+                    partobj.status = status    
+                    valid_bc.append(bc) #Appending created Part() objects, not saved yet.
+                else:
+                    print 2
+                    invalid_bc.append(bc)
