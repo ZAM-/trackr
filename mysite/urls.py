@@ -1,16 +1,18 @@
 # DJANGO IMPORTS
 from django.conf.urls import patterns, include, url
 from django.views.generic import TemplateView
-# git test
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
+
+
 # MY IMPORTS
 from trackr.preview import PartPreview
+from trackr import views
+from trackr.forms import MyFormStep0, MyFormStep1
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
-#from trackr.views import viewPartTable, viewPartTypeTable, manu_detail
-from trackr import views
-from trackr.forms import MyFormStep0, MyFormStep1
 
 urlpatterns = patterns('',
     #url(r'^test/', include('trackr.urls')),
@@ -28,10 +30,10 @@ urlpatterns = patterns('',
     # Check in Pages
     url(r'check_in/$', views.check_in_or_update_part),
     url(r'check_in/single/$', views.easy_check_in),
-    url(r'check_in/multiple/$', views.easy_many_check_in),
-    url(r'check_in/area/$', views.text_area_check_in),
+    url(r'check_in/many/$', views.text_area_check_in),
     url(r'file_upload/$', views.file_upload),
     #url(r'mass_check_in/$', views.mass_check_in),
+    #url(r'check_in/multiple/$', views.easy_many_check_in),
 
     # Check Out Pages
     url(r'check_out/$', views.check_out_part),
@@ -42,6 +44,7 @@ urlpatterns = patterns('',
     # Development Pages
     url(r'post/$', PartPreview(MyFormStep1)),
     url(r'wizard/$', views.SuperSoftWizard.as_view([MyFormStep0])),
+    url(r'check_in/test/$', views.test_text_area),
     
     
 

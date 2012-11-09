@@ -12,15 +12,9 @@
     <p><a href='/add_part_type'>Define a new part ID</a></p>
 
 	{% if messages %}    
-    	<p>Review of checked in parts</p>	
+    	<h3>Review of checked in parts</h3>	
 		{% for item in messages %}
 			{{ item }}
 		{% endfor %}
 	{% endif %}	
-
-	{% for message in messages %}
-        {{ message }}<br />
-	{% endfor %}
-
-
 {% endblock %}

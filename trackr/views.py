@@ -16,6 +16,7 @@ from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.contrib.formtools.wizard.views import SessionWizardView
+from django.template import Context 
 
 import ipdb
 # My imports
@@ -196,7 +197,6 @@ def check_out_part(request):
                                                'errors': errlst,
                                                })
 
-
 def add_part_type(request):
     
     c = {}
@@ -278,41 +278,62 @@ def easy_many_check_in(request):
 # formset with each bar_code entered as a form. Which 'should' allow for seperate validation
 # Restrictions: Only one part type can be proccessed at a time.
 
+
+def test_text_area(request):
+    c = Context()
+    c.update(csrf(request))
+    template_name= 'test.html'
+    if request.method == "POST":
+        form = TextAreaForm(request.POST)
+        if form.is_valid():
+            if '_preview' in request.POST:
+                #Creating seperate 
+                template_name = 'preview.html'
+                #Don't save the post, just updating the context
+                #The Context is v_scans, and iv_scans, so I render them in the preview
+                v_scans, iv_scans = form.pre_process()
+                c['v_scans'] = v_scans
+                c['iv_scans'] = iv_scans
+                c['form'] = form
+                return render(request,template_name,c)
+                
+            elif '_save' in request.POST:
+                template_name = 'save.html'
+                #Save the post
+                #I'm still updating the context so I can inform the user of what scanned bc's were actually saved to the database.
+                v_scans, iv_scans = form.pre_process()
+                c['v_scans'] = v_scans
+                c['iv_scans'] = iv_scans
+                c['form'] = form
+                form.post_process(v_scans)
+                
+                return render(request,template_name,c)
+    else:
+        form = TextAreaForm(initial={'status':Status(3)})
+
+    c['form'] = form
+    return render(request,template_name,c)
+
 def text_area_check_in(request):
-    c = {}
+    c = Context()
     message_list = []
     c.update(csrf(request))
     if request.method == "POST":
         form = TextAreaForm(request.POST)
         if form.is_valid():
-            v_scans, iv_scans = form.process()
-            # Counting occurances of each valid and invalid scans
+            v_scans, iv_scans = form.pre_process()
+            # Counting occurances of each valid and invalid scans E.G. {'PartType':'quantity'}
             # Used for messaging system for User notification
-            v = {}
-            for item in v_scans:
-                if item not in v.keys():
-                    v[item] = 1
-                    message_list.append(v)
-                else:
-                    v[item] += 1
-                    message_list.append(v)
-            
-            
-            print "message_list", message_list
-            iv = {}
-            for item in iv_scans:
-                if item not in iv.keys():
-                    iv[item] = 1
-                else:
-                    iv[item]
-                    
-            return http.HttpResponseRedirect('')
+            c['v_scans'] = v_scans
+            c['iv_scans'] = iv_scans
+            c['form'] = form
+            return render(request, 'area_check_in.html', c)        
     else:
         form = TextAreaForm(initial={'status':Status(3)})
         
-    return render(request,'easy_check_in.html',{
-                                               'form': form,
-                                               'messages': message_list})
+    c['form'] = form
+
+    return render(request,'area_check_in.html',c)
 
 class SuperSoftWizard(SessionWizardView):
     def get_context_data(self, form, **kwargs):

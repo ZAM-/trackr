@@ -27,8 +27,6 @@ class Manufacturer(models.Model):
         return self.company
     
 class Status(models.Model):
-
-
     status = models.CharField(max_length=2, choices=STATUS_TYPE_CHOICES)
     
     def __unicode__(self):

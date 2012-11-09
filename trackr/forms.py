@@ -10,6 +10,8 @@ from django.forms import TextInput, ModelForm, Form, HiddenInput, ModelChoiceFie
 from django.core.exceptions import ValidationError
 from django import http
 from django.shortcuts import render, render_to_response
+from django.contrib.formtools.preview import FormPreview
+
 #Django plugin
 import django_tables2 as tables
 from django_tables2 import RequestConfig
@@ -201,33 +203,56 @@ class TextAreaForm(Form):
     status = forms.ModelChoiceField(queryset=Status.objects.all(), required=True)
     bar_codes = forms.CharField(widget=forms.Textarea,required=True)
     
-    def process(self):
+    def pre_process(self):
+        #Func to parse text area field
+        
         # Getting all the parts entered in the the text area field
         data = self.cleaned_data
         bar_codes = data.get('bar_codes', None) #Bar_codes of parts
-        status = data.get('status', None)
-        
         all_types = PartType.objects.values('name','number') #Getting ALL existing types LOD
         
         bc_collection = [bc for bc in bar_codes.splitlines()] #Parsing textarea box for barcode scanner input        
         invalid_bc = []
         valid_bc = []
         
-        #Step 1 of filtering valid and invalid bcs from user input
+        #Step 1 of filtering valid and invalid bcs from user input by creating a list for each.
         ([valid_bc.append(bc) for bc in bc_collection if any(types['number'] in bc for types in all_types)],
+         #Invalid_bcs should be in a solid state, b/c there is no need to count each different type scanned in
          [invalid_bc.append(bc) for bc in bc_collection if not any(types['number'] in bc for types in all_types)])
         
         print "valid_bc list", valid_bc
         print "invalid_bc list", invalid_bc
         return (valid_bc, invalid_bc)
-                                        
     
+    def post_process(self,my_list):
+        #Func to create and save Part() objects
+        #Will use list that is filtered from pre_process
+        
+        all_types = PartType.objects.values('name','number')
+        for item in my_list:
+            partobj = Part()
+            for types in all_types:
+                if types['number'] in item:
+                    ptype=types['name']
+                    serial_number = item.replace(types['number'],'') # breaking up bar_code into PN + SN
+                    partobj.bar_code = item
+                    partobj.status = self.cleaned_data['status']
+                    partobj.type = PartType.objects.get(name=ptype)
+                    partobj.serial_number = serial_number
+                    partobj.save()
+        
+                                        
+
 class EasyPartForm(Form):
 # Views -- easy_mass_check_in() to create the 1 form that the formset will use
     bar_code = forms.CharField(max_length=100, required=True,
                                widget = TextInput(attrs={'size':'30'})
                                )
     status = forms.ModelChoiceField(queryset=Status.objects.all(), required=True)
+
+    class meta:
+        model = Part
+        exclude = ('type', 'serial_number')
 
 
     def process(self):

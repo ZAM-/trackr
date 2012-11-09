@@ -1,0 +1,12 @@
+- Create a post scan report
+	o Report back the number of valid parts
+	o Report back the invalid parts and allow for revisions
+	o type - part # (if any) - quantity 
+	
+- Building data structure to classify and collect any type of bar
+  codes that were entered.
+	o [{'bc':'xxxxx','pn':'yyyyy', type:'zzzzz', 'valid':T/F}]
+
+
+10-24:
+TODO - Determine which views are needed and which are not. 
