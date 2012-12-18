@@ -1,65 +1,96 @@
 <!DOCTYPE html>
-
-
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles.css" />
-<script type="text/javascript" src="{{STATIC_URL}}jquery-1.8.1.js"></script>
-
-<script type="text/javascript" src="{{STATIC_URL}}jquery.formset.js"></script>
-
-<script type="text/javascript">
-           $(function() {
-               $('#myForm tbody tr').formset({
-               	addText: "Add",
-               	deleteText: "Remove"
-               });
-           })
-       </script>
-
 <html lang="en">
 
+
+<!-- <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/styles.css" /
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery-1.8.1.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.formset.js"></script>
+>-->
+
 <head>
+	<meta charset="utf-8">
 	<title>Trackr - Main Page</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+
+	<!-- Styles -->
+	<link href="{{STATIC_URL}}css/bootstrap.min.css" rel="stylesheet">
+	<style type="text/css">
+		body {
+			padding-top: 60px;
+			padding-bottom: 40px;
+		}
+		.sidebar-nav {
+			padding: 9px 0;
+		}
+	</style>
+	<link href="{{STATIC_URL}}css/bootstrap-responsive.css" rel="stylesheet">
+	
+
+
+
+<script src="{{STATIC_URL}}js/bootstrap.min.js"></script>
+	<script src="" ></script>
+
 
 </head>
 <body>
-<h1>Trackr</h1>
-<hr>
+	
+	  <div class="navbar navbar-inverse navbar-fixed-top">
+      	<div class="navbar-inner">
+        	<div class="container">
+          		<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            		<span class="icon-bar"></span>
+            		<span class="icon-bar"></span>
+            		<span class="icon-bar"></span>
+          		</a>
+          <a class="brand" href="#">Trackr</a>
+          <!--<div class="nav-collapse collapse">
+            <ul class="nav">
+              <li><a href="#">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+    
+    
+  <div class="row">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              <li class="nav-header">Check In</li>
+              	<li><a href="/check_in/single/">Single Entry</a></li>
+              	<li><a href="/check_in/multiple">Multiple Entries</a></li>
+              	<li><a href="/check_in/file_upload">Upload File</a></li>
+              <li class="nav-header">Check Out</li>
+              	<li><a href="/check_out/">Multiple Entries</a></li>
+              <li class="nav-header">Misc.</li>
+              	<li><a href="/current_count/">Current Count</a></li>
+              	<li><a href="/part_log/">Part Logs</a></li>
+              	<li><a href="/add_part_type/">Add Part Type</a></li>
 
-<div id='cssmenu'>
-<ul>
-   <li class='active'><a href='/index/'><span>Home</span></a></li>
-   <li class='has-sub '><a href='/check_in/'><span>Check In Parts</span></a>
-      <ul>
-         <li><a href='/check_in/single/'><span>Single Entry</span></a></li>
-         <!--<li><a href='/check_in/multiple/'><span>Multiple Entries</span></a></li> -->
-         <li><a href='/check_in/many/'><span>Many Entries</span></a></li>
-         <!-- <li><a href='/check_in/'><span>Single Entry</span></a></li> -->
-         <!-- <li><a href='/mass_check_in/'><span>Multiple Entries</span></a></li> -->
-         <li><a href='/file_upload/'><span>Upload File</span></a></li>
-      </ul>
-   </li>
-   <li class='has-sub '><a href='#'><span>Check Out Parts</span></a>
-      <ul>
-         <li><a href='/check_out'><span>Single Entry</span></a></li>
-         <li><a href='#'><span>Multiple Entries</span></a></li>
-      </ul>
-   </li>
-   <li><a href='/current_count/'><span>Current Count</span></a></li>
-   <li><a href='/part_log/'><span>Part Logs</span></a></li>
-   <!--
-   <li class='has-sub'><a href='/part_log_search/'><span>Part Logs</span></a>
-   	  
-   	  <ul>
-   	  	 <li><a href='#'><span>Checked In</span></a></li>
-   	     <li><a href='#'><span>Checked Out</span></a></li>
-   	  </ul>
-   </li>	
-   -->
-</ul>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+  	
+  	  <div class="span9">{% block content %}{% endblock %}</div>
 </div>
-{% block content %}{% endblock %}
 
 
 
+
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+
+
+</div>
+</div>
 </body>
+<style type="text/css"></style>
 </html>
+
+

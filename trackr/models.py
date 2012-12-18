@@ -60,6 +60,7 @@ class Part(models.Model):
     def __unicode__(self):
         return unicode(self.bar_code)    
 
+
     # Method to set status of a part to "checked out"
     # Returns True or False to be used in view to determine whether
     # or not the Part.object needs to be saved or not. 
@@ -77,11 +78,8 @@ class Part(models.Model):
             if self.status != Status(3):
                 self.status = Status(3)
                 return self.status
-                print "Checking Part in"
-            else:
-                print "This part is already checked in."
         else:
-            pass
+            return False
 
 
 class PartLogManager(models.Manager):

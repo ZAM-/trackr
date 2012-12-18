@@ -13,7 +13,7 @@
     </form>
     <p><a href='/add_part_type'>Define a new part ID</a></p>
 
-{% if v_scans or iv_scans %}
+{% if v_scans or iv_scans or f_scans or type_count %}
 <h3>Preview of scanned parts</h3>	
 	{% if v_scans %}
 		<h4>Valid Bar Codes</h4>
@@ -30,6 +30,24 @@
 		{% for iv_scan in iv_scans %}
 			<li>{{ iv_scan }}</li>
 		{% endfor %}
+		</ul>
+	{% endif %}
+	
+	{% if f_scans %}
+		<h4>These barcodes already exist in the database, therfore will not be updated.</h4>
+		<ul>
+			{% for f_scan in f_scans %}
+			<li> {{ f_scan }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+	
+	{% if type_count %}
+		<h4> Summary of check in process.</h4>
+		<ul>
+			{% for c in type_count %}
+			<li> {{ f_scan }}</li>
+			{% endfor %}
 		</ul>
 	{% endif %}
 

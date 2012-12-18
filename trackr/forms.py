@@ -1,5 +1,7 @@
-import datetime
 
+#python libs
+import datetime
+from collections import defaultdict
 
 # Django
 from django import forms
@@ -73,43 +75,32 @@ class PartForm(BasePartForm):
 #          check_in_part()
     class Meta:
         model = Part
+        exclude = ('serial_number','type')
         widgets = {
                    'bar_code': TextInput(attrs={'size': 30}), # Making text box bigger 
-                   'serial_number': HiddenInput(attrs={'value':''}),
+                   #'serial_number': HiddenInput(attrs={'value':''}),
+                   #'type': HiddenInput(attrs={'value':''}), 
                    }
-    def clean_serial_number(self):
-        # Assigning clean data.
-        bar_code = self.cleaned_data.get("bar_code")
-        part_number = self.cleaned_data.get("type").number
+     
+    def save(self, force_insert=False, force_update=False, commit=True):
+        m = super(PartForm, self).save(commit=False)
+        results = []
         
-        # Need to check if bar_code exists first
-        # or second 'if' will fail 
-        if bar_code:
-            if part_number not in bar_code:
-                raise forms.ValidationError("Barcode does not match type.")
+        cleaned_data = self.cleaned_data
+        bar_code = cleaned_data.get('bar_code')
+        serial_number = cleaned_data.get('serial_number')
+        typez = cleaned_data.get('type')
+        status = cleaned_data.get('status')
+        all_types = PartType.objects.values('name','number')
+        
+        for types in all_types:
+            if types['number'] in bar_code:
+                m.type=PartType.objects.get(number=types['number'])
+                m.serial_number=bar_code.replace(types['number'],'')
+                m.save()
             else:
-                # Assigning the hidden serial_number field
-                # Bar_Code - Part_Number = sn
-                serial_number = bar_code.replace(part_number,'')
-            # Required to return serial_number when done cleaning
-            return serial_number
-        else:
-            raise forms.ValidationError(
-                    "Did not validate, because bar code field is empty.")
-            
+                pass
     
-    def clean_status(self):
-        status = self.cleaned_data['status']
-        # Checking if the part already exists 
-        if self.instance.pk:
-            # Before I couldn't get passed this state without getting AttributeError
-            # Assigning oldStatus only would work if an initial entry existed
-            oldStatus = self.instance._state.old_status
-            if oldStatus == status:
-                raise forms.ValidationError("This part currently has this status")
-
-        # Required to return status when done cleaning  
-        return status
 
 # Base Formset
 class BaseEasyPartFormSet(BaseFormSet):
@@ -153,9 +144,6 @@ class BaseEasyPartFormSet(BaseFormSet):
                 return False
                 print 3
 
-
-
-    
 class CheckOutPartForm(Form):
     #FIXME: possibly change to a regex field [a-zA-Z0-9]
     bar_code = forms.CharField(max_length=100, required=False,
@@ -166,9 +154,66 @@ class CheckOutPartForm(Form):
         bar_code = self.cleaned_data['bar_code']
         if not bar_code:
             raise forms.ValidationError("Please enter a bar_code.")
-        print "HI", bar_code
         return bar_code
 
+class AreaCheckOut(Form):
+    bar_code = forms.CharField(widget=forms.Textarea(attrs={'cols':100,'rows':15}),required=True)
+
+    def pre_process(self):
+        data = self.cleaned_data
+        bar_codes = data.get('bar_code',None)    
+        bc_collection = [bc for bc in bar_codes.splitlines()]
+            
+        valid_bc = []
+        invalid_bc = []
+        filtered_bc = []
+            
+        for bc in bc_collection:
+            try: 
+                bar_code_model = Part.objects.get(bar_code=bc)
+            except Part.DoesNotExist:
+                invalid_bc.append(bc)
+            else:
+                # If this method passes after it checks the part out
+                if bar_code_model.check_out() == True:
+                    valid_bc.append(bar_code_model)
+                else:
+                    filtered_bc.append(bc) # If the part is already checked out
+        
+        return (filtered_bc, valid_bc, invalid_bc)
+
+
+
+        
+    def post_process(self):
+        #Determine whether or not the part scanned in actually exists or not.
+        data = self.cleaned_data
+        bar_codes = data.get('bar_code',None)    
+        bc_collection = [bc for bc in bar_codes.splitlines()]
+            
+        valid_bc = []
+        invalid_bc = []
+        filtered_bc = []
+            
+        for bc in bc_collection:
+            try: 
+                bar_code_model = Part.objects.get(bar_code=bc)
+            except Part.DoesNotExist:
+                invalid_bc.append(bc)
+            else:
+                # If this method passes after it checks the part out
+                if bar_code_model.check_out() == True:
+                    #valid_bc.append(bc)
+                    bar_code_model.save()
+                    valid_bc.append(bar_code_model)
+                else:
+                    filtered_bc.append(bc) # If the part is already checked out
+        
+        return (filtered_bc, valid_bc, invalid_bc)
+        
+
+
+                    
 class PartUploadFileForm(Form):
     type = forms.ModelChoiceField(queryset=PartType.objects.all(), required=True)
     status = forms.ModelChoiceField(queryset=Status.objects.all(), required=True)
@@ -201,7 +246,7 @@ class PartLogSearchForm(Form):
 class TextAreaForm(Form):
     
     status = forms.ModelChoiceField(queryset=Status.objects.all(), required=True)
-    bar_codes = forms.CharField(widget=forms.Textarea,required=True)
+    bar_codes = forms.CharField(widget=forms.Textarea(attrs={'cols': 100, 'rows':15}),required=True)
     
     def pre_process(self):
         #Func to parse text area field
@@ -212,24 +257,26 @@ class TextAreaForm(Form):
         all_types = PartType.objects.values('name','number') #Getting ALL existing types LOD
         
         bc_collection = [bc for bc in bar_codes.splitlines()] #Parsing textarea box for barcode scanner input        
-        invalid_bc = []
-        valid_bc = []
         
-        #Step 1 of filtering valid and invalid bcs from user input by creating a list for each.
-        ([valid_bc.append(bc) for bc in bc_collection if any(types['number'] in bc for types in all_types)],
-         #Invalid_bcs should be in a solid state, b/c there is no need to count each different type scanned in
-         [invalid_bc.append(bc) for bc in bc_collection if not any(types['number'] in bc for types in all_types)])
+        type_count = defaultdict(int)
+        valid_bc = [] #BCs ready for insert
+        invalid_bc = [] #No part number match found
+        filtered_bc = [] #BCs that are already found to be checked_in
         
+        ([filtered_bc.append(bc) for bc in bc_collection if Part.objects.filter(bar_code=bc).exists() == True],
+        [valid_bc.append(bc) for bc in bc_collection if any(types['number'] in bc for types in all_types) and bc not in filtered_bc],
+        [invalid_bc.append(bc) for bc in bc_collection if not any(types['number'] in bc for types in all_types)])
+        
+            
+        print "filtered_bc list", filtered_bc
         print "valid_bc list", valid_bc
         print "invalid_bc list", invalid_bc
-        return (valid_bc, invalid_bc)
+        return (filtered_bc, valid_bc, invalid_bc)
     
-    def post_process(self,my_list):
-        #Func to create and save Part() objects
-        #Will use list that is filtered from pre_process
-        
+    def post_process(self,valid_bc_list):
+        #Func to create and save Part() objects         
         all_types = PartType.objects.values('name','number')
-        for item in my_list:
+        for item in valid_bc_list:
             partobj = Part()
             for types in all_types:
                 if types['number'] in item:
@@ -237,97 +284,23 @@ class TextAreaForm(Form):
                     serial_number = item.replace(types['number'],'') # breaking up bar_code into PN + SN
                     partobj.bar_code = item
                     partobj.status = self.cleaned_data['status']
-                    partobj.type = PartType.objects.get(name=ptype)
+                    partobj.type = PartType.objects.get(number=types['number'])
                     partobj.serial_number = serial_number
                     partobj.save()
-        
                                         
-
-class EasyPartForm(Form):
-# Views -- easy_mass_check_in() to create the 1 form that the formset will use
-    bar_code = forms.CharField(max_length=100, required=True,
-                               widget = TextInput(attrs={'size':'30'})
-                               )
-    status = forms.ModelChoiceField(queryset=Status.objects.all(), required=True)
-
-    class meta:
-        model = Part
-        exclude = ('type', 'serial_number')
-
-
-    def process(self):
-    # pre-save process method. The Part() object saving happens in the view. 
-        # Setting attributes for partobj
-        bar_code = self.cleaned_data['bar_code']
-        status = self.cleaned_data['status']
-        serial_number = None
-        ptype = None
-        # Getting ALL existing types
-        all_types = PartType.objects.values('name','number') #LOD
-        # Looping through all the types
-        # setting type and serial_number according to match. 
-        for types in all_types:
-            if types['number'] in bar_code:
-                ptype = types['name']
-                serial_number = bar_code.replace(types['number'],'') # breaking up bar_code into PN + SN
-                partobj = Part()
-                partobj.bar_code = bar_code
-                partobj.status = status
-                partobj.type = PartType.objects.get(name=ptype)
-                partobj.serial_number = serial_number
-                
-                #Returning partobj so I can use type, and SN in the user messages.
-                return partobj
-                return True
-            else:
-                pass
-        else:
-            return False
-                                
-
-# Wizard forms
-class MyFormStep0(Form):
-    status = forms.ModelChoiceField(queryset=Status.objects.all(), required=True)
-    parts = forms.CharField(widget=forms.Textarea,required=True)
-    
-    def clean(self):
-        form_collection = []
-        serail_number = None
-        ptype = None
-        # Getting ALL existing types
-        all_types = PartType.objects.values('name','number') #LOD
+    def process_count(self,myList):
+        #Func to just return the count of types
+        #Params: List of barcodes
+        type_count = defaultdict(int)
+        all_types = PartType.objects.values('name','number')
         
-        # Getting all the parts entered in the the text area field
-        data = self.cleaned_data
-        bar_codes = data.get('parts',None) #Bar_codes of parts
-        
-        # Parsing textarea box for barcode scanner input
-        for bc in bar_codes.splitlines():
+        for item in myList:
+            print item
+            print 1
             for types in all_types:
-                if types['number'] in bc:
-                    ptype = types['name']
-            form_collection.append({'bc':bc})
-            
-        
-    
-class MyFormStep1(ModelForm):
-    parts = forms.CharField(widget=forms.Textarea, required=True)
-    
-    class Meta:
-        model = Part
-        exclude = ('part','status','bar_code','serial_number')
-"""                     
-    def clean(self):
-        #Checks that no two articles have the same title
-        if any(self.errors):
-            # Don't bother validating unless each form is valid on it's own
-            return
-        bar_codes = []
-        for item in range(0, self.total_form_count()):
-            form = self.forms[item]
-            bar_code = form.cleaned_data['bar_code']
-            if bar_code in bar_codes:
-                raise forms.ValidationError("Parts in a set must have distinct barcodes.")
-            else:
-                bar_codes.append(bar_code)
-"""
+                print 2
+                if types['number'] in item:
+                    type_count[types['name']] += 1
+
+        print type_count
+        return type_count

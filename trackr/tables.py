@@ -33,7 +33,7 @@ class PartTypeT(tables.Table):
     class Meta:
         model = PartType        
         attrs = {'class':'paleblue'}
-
+        
 class ManufacturerT(tables.Table):
     # To do...
     class Meta:
@@ -60,9 +60,14 @@ class PartLogT(tables.Table):
         order_by_field = True
         model = PartLog
         attrs = {'class':'paleblue'}
-        exclude = ("id",)
+        exclude = ("id","part")
         
-        
-        
-        
+class PartLogTT(tables.Table):
+    part_type = tables.Column(accessor='part.type', verbose_name="Type", orderable=True)
+    class Meta:
+        order_by_field = True
+        model = PartLog
+        attrs = {'class':'paleblue'}
+        exclude = ('pk','id','part')
+        sequence = ('part_type','time_stamp','old_status','new_status')
         

@@ -8,7 +8,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 # MY IMPORTS
 from trackr.preview import PartPreview
 from trackr import views
-from trackr.forms import MyFormStep0, MyFormStep1
+
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -28,10 +28,9 @@ urlpatterns = patterns('',
     url(r'add_part_type/$', views.add_part_type),
 
     # Check in Pages
-    url(r'check_in/$', views.check_in_or_update_part),
-    url(r'check_in/single/$', views.easy_check_in),
-    url(r'check_in/many/$', views.text_area_check_in),
-    url(r'file_upload/$', views.file_upload),
+    url(r'check_in/single/$', views.check_in_or_update_part),
+    url(r'check_in/file_upload/$', views.file_upload),
+    url(r'check_in/multiple/$', views.test_text_area),
     #url(r'mass_check_in/$', views.mass_check_in),
     #url(r'check_in/multiple/$', views.easy_many_check_in),
 
@@ -42,9 +41,7 @@ urlpatterns = patterns('',
     url(r'part_log/$', views.search_log),
     
     # Development Pages
-    url(r'post/$', PartPreview(MyFormStep1)),
-    url(r'wizard/$', views.SuperSoftWizard.as_view([MyFormStep0])),
-    url(r'check_in/test/$', views.test_text_area),
+
     
     
 

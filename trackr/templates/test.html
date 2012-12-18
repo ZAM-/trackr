@@ -4,14 +4,14 @@
 {% block content %}	
 
 
-<h2>Scan the part and mark the new status. </h2>
+<h2>Scan part(s)</h2>
 	<form action="" method="POST">{% csrf_token %}
 		{{ form.as_p }}
     	<button type='submit' name='_preview'>Preview</button>
     	<button type='submit' name="_save">Save</button>
     	<button type='reset' name='_reset'>Reset</button>
     </form>
-    <p><a href='/add_part_type'>Define a new part ID</a></p>
+    <p><a href='/add_part_type/'>Define a new part ID</a></p>
 
 {% if v_scans or iv_scans %}
 <h3>Here is a complete list of what just entered the databse.</h3>	

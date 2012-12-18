@@ -123,6 +123,7 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     'trackr',
+    'test_utils',
     'django_tables2',
     'djcelery',
     #'debug_toolbar',
