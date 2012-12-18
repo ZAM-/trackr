@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+
+{% block content %}	
+
+
+<h2>Check Out</h2>
+	<form action="" method="POST">{% csrf_token %}
+		{{ form.as_p }}
+    	<button type='submit' name='_preview'>Preview</button>
+    	<button type='submit' name="_save">Save</button>
+    	<button type='reset' name='_reset'>Reset</button>
+    </form>
+    <p><a href='/add_part_type/'>Define a new part ID</a></p>
+
+{% if v_scans or iv_scans %}
+<h3>Review of Checked Out items</h3>	
+	{% if v_scans %}
+		<h5>Valid Bar Codes</h5>
+		
+		<ul>
+		<!-- {% for v_scan in v_scans %}
+			<li>{{ v_scan }}</li>
+		{% endfor %} -->
+		{% for count in v_scans %}
+			<li>{{ count }}</li>
+		{% endfor %}
+		</ul>
+	{% endif %}
+	
+	{% if iv_scans %}
+		<h4>Here is a list of what did not get checked out.</h4>
+		<ul>
+		{% for iv_scan in iv_scans %}
+			<li>{{ iv_scan }}</li>
+		{% endfor %}
+		</ul>
+	{% endif %}
+
+{% endif %}
+
+{% endblock %}

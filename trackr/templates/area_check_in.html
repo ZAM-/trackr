@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+
+{% block content %}	
+
+
+<h2>Scan the part and mark the new status. </h2>
+	<form action="" method="POST">{% csrf_token %}
+		{{ form.as_p }}
+    	<button type='submit' value='preview'>Preview</button>
+    	<button type="reset" value="Reset">Reset</button>
+    </form>
+    <p><a href='/add_part_type'>Define a new part ID</a></p>
+
+{% if v_scans or iv_scans %}
+<h3>Preview of scanned parts</h3>	
+	{% if v_scans %}
+		<h4>Valid Bar Codes</h4>
+		<ul>
+		{% for v_scan in v_scans %}
+			<li>{{ v_scan }}</li>
+		{% endfor %}
+		</ul>
+	{% endif %}
+	
+	{% if iv_scans %}
+		<h4>Invalid Bar Codes</h4>
+		<ul>
+		{% for iv_scan in iv_scans %}
+			<li>{{ iv_scan }}</li>
+		{% endfor %}
+		</ul>
+	{% endif %}
+
+{% endif %}
+
+{% endblock %}
